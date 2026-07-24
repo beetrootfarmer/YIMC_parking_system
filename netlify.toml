@@ -1,0 +1,14 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20.19.0"
+
+# React Router uses BrowserRouter (client-side routing), so every path must
+# fall back to index.html for the app to handle routing itself — otherwise
+# direct loads/refreshes of e.g. /admin/settings 404 on Netlify's static host.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
