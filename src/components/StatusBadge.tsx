@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { FaCheck, FaExclamationCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
+import { FaCheck, FaExclamationCircle, FaExclamationTriangle } from 'react-icons/fa';
 import { pulse } from '../styles/keyframes';
 import type { RequestStatus } from '../types';
 
