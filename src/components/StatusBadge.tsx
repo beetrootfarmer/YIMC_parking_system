@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import { FaCheck, FaExclamationCircle, FaExclamationTriangle, FaSpinner } from 'react-icons/fa';
-import { pulse, spin } from '../styles/keyframes';
+import { pulse } from '../styles/keyframes';
 import type { RequestStatus } from '../types';
 
 const Pill = styled.span<{ $status: RequestStatus; $bordered?: boolean }>`
