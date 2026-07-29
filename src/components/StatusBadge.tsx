@@ -55,9 +55,7 @@ interface StatusBadgeProps {
 export const StatusBadge = ({ status, variant = 'admin' }: StatusBadgeProps) => (
   <Pill $status={status} $bordered={variant === 'admin'}>
     {status === '대기중' ? (
-      variant !== 'tablet' ? (
-       <Dot />
-      )
+     variant !== 'tablet' && <Dot />
     ) : status === '인식안됨' ? (
       variant === 'tablet' ? <FaExclamationCircle /> : <FaExclamationTriangle />
     ) : (
