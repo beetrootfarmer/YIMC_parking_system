@@ -43,8 +43,8 @@ const SpinningIcon = styled(FaSpinner)`
 `;
 
 const LABELS: Record<'tablet' | 'admin', Record<RequestStatus, string>> = {
-  tablet: { 대기중: '대기중', 인식안됨: '인식안됨 (사무실 문의)', 완료: '처리완료' },
-  admin: { 대기중: '대기중', 인식안됨: '인식안됨', 완료: '완료' },
+  tablet: { 대기중: '승인중', 인식안됨: '인식안됨 (사무실 문의)', 완료: '처리완료' },
+  admin: { 대기중: '승인중', 인식안됨: '인식안됨', 완료: '완료' },
 };
 
 interface StatusBadgeProps {
@@ -56,7 +56,7 @@ export const StatusBadge = ({ status, variant = 'admin' }: StatusBadgeProps) => 
   <Pill $status={status} $bordered={variant === 'admin'}>
     {status === '대기중' ? (
       variant === 'tablet' ? (
-        <SpinningIcon />
+        < />
       ) : (
         <Dot />
       )
