@@ -38,10 +38,6 @@ const Dot = styled.span`
   animation: ${pulse} 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 `;
 
-const SpinningIcon = styled(FaSpinner)`
-  animation: ${spin} 1s linear infinite;
-`;
-
 const LABELS: Record<'tablet' | 'admin', Record<RequestStatus, string>> = {
   tablet: { 대기중: '승인중', 인식안됨: '인식안됨 (사무실 문의)', 완료: '처리완료' },
   admin: { 대기중: '승인중', 인식안됨: '인식안됨', 완료: '완료' },
