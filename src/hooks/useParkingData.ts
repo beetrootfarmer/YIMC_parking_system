@@ -30,7 +30,7 @@ export const useParkingData = ({ polling = true }: UseParkingDataOptions = {}) =
   const updateMutation = useMutation({ mutationFn: (input: UpdateRequestInput) => api.updateRequest(input) });
   const completeMutation = useMutation({ mutationFn: (id: string) => api.completeRequest(id) });
   const unrecognizedMutation = useMutation({ mutationFn: (id: string) => api.markUnrecognizedRequest(id) });
-  const deleteMutation = useMutation({ mutationFn: (id: string) => api.deleteRequest(id) });
+  const deleteMutation = useMutation({ mutationFn: (ids: string[] | 'all') => api.deleteRequest(ids) });
   const saveSettingsMutation = useMutation({
     mutationFn: (input: { courses: string[]; tabletPassword: string; adminPassword: string }) =>
       api.saveSettings(input.courses, input.tabletPassword, input.adminPassword),
@@ -57,7 +57,7 @@ export const useParkingData = ({ polling = true }: UseParkingDataOptions = {}) =
     updateRequestById: (input: UpdateRequestInput) => runAction(updateMutation.mutateAsync, input),
     completeRequestById: (id: string) => runAction(completeMutation.mutateAsync, id),
     markUnrecognized: (id: string) => runAction(unrecognizedMutation.mutateAsync, id),
-    deleteRequestById: (id: string) => runAction(deleteMutation.mutateAsync, id),
+    deleteRequestById: (ids: string[] | 'all') => runAction(deleteMutation.mutateAsync, ids),
     saveSettings: (courses: string[], tabletPassword: string, adminPassword: string) =>
       runAction(saveSettingsMutation.mutateAsync, { courses, tabletPassword, adminPassword }),
   };

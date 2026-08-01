@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { FaTrashAlt, FaVolumeUp } from 'react-icons/fa';
 import { useParkingData } from '../../hooks/useParkingData';
@@ -28,6 +28,12 @@ const HeaderSubtitle = styled.p`
   margin: 0;
 `;
 
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
 const TestSoundButton = styled.button`
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.blue600};
@@ -44,6 +50,41 @@ const TestSoundButton = styled.button`
   &:hover {
     background: ${({ theme }) => theme.colors.blue100};
   }
+`;
+
+const DeleteSelectedButton = styled.button`
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.red600};
+  background: ${({ theme }) => theme.colors.red50};
+  border: 1px solid ${({ theme }) => theme.colors.red200};
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.red100};
+  }
+
+  &:disabled {
+    color: ${({ theme }) => theme.colors.gray400};
+    background: ${({ theme }) => theme.colors.gray100};
+    border-color: ${({ theme }) => theme.colors.gray200};
+    cursor: not-allowed;
+  }
+`;
+
+const CheckboxCell = styled.td`
+  padding: 1rem;
+  width: 2.5rem;
+`;
+
+const CheckboxHeader = styled.th`
+  padding: 1rem;
+  width: 2.5rem;
 `;
 
 const TableCard = styled.div`
@@ -141,27 +182,39 @@ const ActionsCell = styled(Td)`
   }
 `;
 
-const DeleteIconButton = styled(Button)`
-  background: ${({ theme }) => theme.colors.slate100};
-  color: ${({ theme }) => theme.colors.slate600};
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.red50};
-    color: ${({ theme }) => theme.colors.red600};
-  }
-`;
-
-type PendingAction = { type: 'unrecognized' | 'delete'; request: ParkingRequest };
-
 export const DashboardPage = () => {
   const { requests, completeRequestById, markUnrecognized, deleteRequestById } = useParkingData();
-  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [pendingUnrecognized, setPendingUnrecognized] = useState<ParkingRequest | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
-  const runPendingAction = async () => {
-    if (!pendingAction) return;
-    if (pendingAction.type === 'unrecognized') await markUnrecognized(pendingAction.request.id);
-    else await deleteRequestById(pendingAction.request.id);
-    setPendingAction(null);
+  useEffect(() => {
+    const validIds = new Set(requests.map((req) => req.id));
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => validIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [requests]);
+
+  const allSelected = requests.length > 0 && selectedIds.size === requests.length;
+
+  const toggleSelectAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(requests.map((req) => req.id)));
+  };
+
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const runBulkDelete = async () => {
+    await deleteRequestById(allSelected ? 'all' : Array.from(selectedIds));
+    setSelectedIds(new Set());
+    setBulkDeleteConfirm(false);
   };
 
   return (
@@ -171,9 +224,18 @@ export const DashboardPage = () => {
           <HeaderTitle>오늘의 접수 현황</HeaderTitle>
           <HeaderSubtitle>구글 클라우드 시트와 실시간 연동 중입니다.</HeaderSubtitle>
         </div>
-        <TestSoundButton type="button" onClick={playNotificationSound}>
-          <FaVolumeUp /> 소리 테스트
-        </TestSoundButton>
+        <HeaderActions>
+          <TestSoundButton type="button" onClick={playNotificationSound}>
+            <FaVolumeUp /> 소리 테스트
+          </TestSoundButton>
+          <DeleteSelectedButton
+            type="button"
+            disabled={selectedIds.size === 0}
+            onClick={() => setBulkDeleteConfirm(true)}
+          >
+            <FaTrashAlt /> 삭제{selectedIds.size > 0 ? ` (${selectedIds.size})` : ''}
+          </DeleteSelectedButton>
+        </HeaderActions>
       </HeaderRow>
 
       <TableCard>
@@ -181,6 +243,9 @@ export const DashboardPage = () => {
           <Table>
             <Thead>
               <tr>
+                <CheckboxHeader>
+                  <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} aria-label="전체 선택" />
+                </CheckboxHeader>
                 <Th>요청 시간</Th>
                 <Th>대관 시설/강좌</Th>
                 <Th>이용 시간</Th>
@@ -193,11 +258,19 @@ export const DashboardPage = () => {
             <Tbody>
               {requests.length === 0 ? (
                 <tr>
-                  <EmptyRow colSpan={7}>접수된 주차 요청이 없습니다.</EmptyRow>
+                  <EmptyRow colSpan={8}>접수된 주차 요청이 없습니다.</EmptyRow>
                 </tr>
               ) : (
                 [...requests].reverse().map((req) => (
                   <tr key={req.id}>
+                    <CheckboxCell>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(req.id)}
+                        onChange={() => toggleOne(req.id)}
+                        aria-label={`${req.carNumber} 선택`}
+                      />
+                    </CheckboxCell>
                     <Td>
                       <DateText>{formatDate(req.timestamp)}</DateText>
                       <TimeText>{formatTime(req.timestamp)}</TimeText>
@@ -221,23 +294,11 @@ export const DashboardPage = () => {
                           <Button type="button" $variant="primary" onClick={() => completeRequestById(req.id)}>
                             등록완료
                           </Button>
-                          <Button
-                            type="button"
-                            $variant="warning"
-                            onClick={() => setPendingAction({ type: 'unrecognized', request: req })}
-                          >
+                          <Button type="button" $variant="warning" onClick={() => setPendingUnrecognized(req)}>
                             인식불가
                           </Button>
                         </>
                       )}
-                      <DeleteIconButton
-                        type="button"
-                        $variant="neutral"
-                        title="기록 삭제"
-                        onClick={() => setPendingAction({ type: 'delete', request: req })}
-                      >
-                        <FaTrashAlt />
-                      </DeleteIconButton>
                     </ActionsCell>
                   </tr>
                 ))
@@ -247,18 +308,28 @@ export const DashboardPage = () => {
         </TableScroll>
       </TableCard>
 
-      {pendingAction && (
+      {pendingUnrecognized && (
         <ConfirmModal
-          title={pendingAction.type === 'unrecognized' ? '인식안됨 처리 확인' : '기록 삭제 확인'}
-          message={
-            pendingAction.type === 'unrecognized'
-              ? '이 차량을 인식안됨 처리하시겠습니까?'
-              : '정말 이 기록을 구글 시트에서 삭제하시겠습니까?'
-          }
-          confirmLabel={pendingAction.type === 'unrecognized' ? '인식안됨 처리' : '삭제'}
-          variant={pendingAction.type === 'unrecognized' ? 'warning' : 'danger'}
-          onConfirm={runPendingAction}
-          onCancel={() => setPendingAction(null)}
+          title="인식안됨 처리 확인"
+          message="이 차량을 인식안됨 처리하시겠습니까?"
+          confirmLabel="인식안됨 처리"
+          variant="warning"
+          onConfirm={async () => {
+            await markUnrecognized(pendingUnrecognized.id);
+            setPendingUnrecognized(null);
+          }}
+          onCancel={() => setPendingUnrecognized(null)}
+        />
+      )}
+
+      {bulkDeleteConfirm && (
+        <ConfirmModal
+          title="기록 삭제 확인"
+          message={`선택한 ${selectedIds.size}건을 정말 구글 시트에서 삭제하시겠습니까?`}
+          confirmLabel="삭제"
+          variant="danger"
+          onConfirm={runBulkDelete}
+          onCancel={() => setBulkDeleteConfirm(false)}
         />
       )}
     </div>

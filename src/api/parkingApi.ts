@@ -43,7 +43,7 @@ export const completeRequest = (id: string) => sendAction({ action: 'complete', 
 
 export const markUnrecognizedRequest = (id: string) => sendAction({ action: 'unrecognized', id });
 
-export const deleteRequest = (id: string) => sendAction({ action: 'delete', id });
+export const deleteRequest = (ids: string[] | 'all') => sendAction({ action: 'delete', ids });
 
 export const saveSettings = (courses: string[], tabletPassword: string, adminPassword: string) =>
   sendAction({ action: 'saveSettings', courses, tabletPassword, adminPassword });
