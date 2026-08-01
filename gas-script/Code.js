@@ -192,16 +192,23 @@ function archiveStaleRequests() {
   rowNumsToDelete.sort((a, b) => b - a).forEach((rowNum) => reqSheet.deleteRow(rowNum));
 }
 
-// Apps Script 편집기에서 이 함수를 한 번 실행하면 두 개의 일일 트리거가 등록된다.
-// (매일 00시대에 backup 정리 -> 지난 날짜 requests 이관 순으로 실행)
+// cleanupOldBackup과 archiveStaleRequests는 둘 다 backup 시트를 건드리므로,
+// 두 개의 독립된 트리거로 나누면 실행 시각이 겹칠 때 backup 시트에 빈 행이 생기는 등
+// 경쟁 상태(race condition)가 생길 수 있다. 하나의 트리거 함수에서 순차 실행해 이를 방지한다.
+function dailyMaintenance() {
+  cleanupOldBackup();
+  archiveStaleRequests();
+}
+
+// Apps Script 편집기에서 이 함수를 한 번 실행하면 매일 00시대에
+// dailyMaintenance(backup 정리 -> 지난 날짜 requests 이관 순 실행)를 도는 트리거가 등록된다.
 function setupDailyTriggers() {
   ScriptApp.getProjectTriggers().forEach((trigger) => {
     const fn = trigger.getHandlerFunction();
-    if (fn === 'cleanupOldBackup' || fn === 'archiveStaleRequests') {
+    if (fn === 'cleanupOldBackup' || fn === 'archiveStaleRequests' || fn === 'dailyMaintenance') {
       ScriptApp.deleteTrigger(trigger);
     }
   });
 
-  ScriptApp.newTrigger('cleanupOldBackup').timeBased().everyDays(1).atHour(0).create();
-  ScriptApp.newTrigger('archiveStaleRequests').timeBased().everyDays(1).atHour(0).create();
+  ScriptApp.newTrigger('dailyMaintenance').timeBased().everyDays(1).atHour(0).create();
 }
