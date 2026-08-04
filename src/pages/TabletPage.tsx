@@ -95,9 +95,13 @@ export const TabletPage = () => {
           cancelLabel="닫기"
           variant="danger"
           onConfirm={async () => {
-            await deleteRequestById([cancelingReq.id]);
+            const success = await deleteRequestById([cancelingReq.id]);
             setCancelingReq(null);
-            setToast({ message: '접수가 취소되었습니다.', type: 'error' });
+            setToast(
+              success
+                ? { message: '접수가 취소되었습니다.', type: 'error' }
+                : { message: '접수 취소에 실패했습니다. 다시 시도해주세요.', type: 'error' },
+            );
           }}
           onCancel={() => setCancelingReq(null)}
         />

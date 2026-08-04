@@ -68,7 +68,10 @@ function doPost(e) {
           .forEach((rowNum) => reqSheet.deleteRow(rowNum));
       }
 
-      return sendResponse({ success: true, deletedCount: rowsToBackup.length });
+      // ids를 지정했는데 매칭된 행이 하나도 없으면(예: 이전 버전 프런트가 보낸 옛 payload 형식,
+      // 이미 삭제된 id 등) 조용히 성공 처리하지 않고 실패로 응답해 프런트가 오류를 인지하게 한다.
+      const success = deleteAll || rowsToBackup.length > 0;
+      return sendResponse({ success, deletedCount: rowsToBackup.length });
     }
 
     if (data.action === 'update') {
