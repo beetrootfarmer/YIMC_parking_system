@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from '../api/parkingApi';
 import type { NewRequestInput, ParkingSettings, UpdateRequestInput } from '../types';
@@ -16,6 +17,8 @@ interface UseParkingDataOptions {
 
 export const useParkingData = ({ polling = true }: UseParkingDataOptions = {}) => {
   const queryClient = useQueryClient();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [pendingActionIds, setPendingActionIds] = useState<Set<string>>(new Set());
 
   const query = useQuery({
     queryKey: CLOUD_DATA_KEY,
@@ -37,6 +40,9 @@ export const useParkingData = ({ polling = true }: UseParkingDataOptions = {}) =
       api.saveSettings(input.courses, input.tabletPassword, input.adminPassword),
   });
 
+  // 서버 응답뿐 아니라 뒤이은 목록 재조회(invalidate)가 끝날 때까지 true를 유지해,
+  // 화면에 최신 상태가 반영되기 전에 버튼이 다시 활성화되어 중복 클릭/중복 등록으로
+  // 이어지는 것을 막는다.
   const runAction = async <T>(
     mutateAsync: (input: T) => Promise<{ success: boolean } | null>,
     input: T,
@@ -49,15 +55,38 @@ export const useParkingData = ({ polling = true }: UseParkingDataOptions = {}) =
     return false;
   };
 
+  const runIdAction = async (id: string, mutateAsync: (id: string) => Promise<{ success: boolean } | null>) => {
+    setPendingActionIds((prev) => new Set(prev).add(id));
+    try {
+      return await runAction(mutateAsync, id);
+    } finally {
+      setPendingActionIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const submitRequest = async (input: NewRequestInput) => {
+    setIsRegistering(true);
+    try {
+      return await runAction(addMutation.mutateAsync, input);
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
   return {
     requests: query.data?.requests ?? [],
     settings: query.data?.settings ?? DEFAULT_SETTINGS,
     isSyncing: query.isFetching,
-    isSubmitting: addMutation.isPending,
-    submitRequest: (input: NewRequestInput) => runAction(addMutation.mutateAsync, input),
+    isSubmitting: isRegistering,
+    pendingActionIds,
+    submitRequest,
     updateRequestById: (input: UpdateRequestInput) => runAction(updateMutation.mutateAsync, input),
-    completeRequestById: (id: string) => runAction(completeMutation.mutateAsync, id),
-    markUnrecognized: (id: string) => runAction(unrecognizedMutation.mutateAsync, id),
+    completeRequestById: (id: string) => runIdAction(id, completeMutation.mutateAsync),
+    markUnrecognized: (id: string) => runIdAction(id, unrecognizedMutation.mutateAsync),
     deleteRequestById: (ids: string[] | 'all') => runAction(deleteMutation.mutateAsync, ids),
     cancelRequestById: (ids: string[] | 'all') => runAction(cancelMutation.mutateAsync, ids),
     saveSettings: (courses: string[], tabletPassword: string, adminPassword: string) =>

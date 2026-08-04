@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import styled from 'styled-components';
 import { FaExclamationTriangle } from 'react-icons/fa';
@@ -50,7 +51,7 @@ interface ConfirmModalProps {
   confirmLabel?: string;
   cancelLabel?: string;
   variant?: 'danger' | 'warning';
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -62,22 +63,40 @@ export const ConfirmModal = ({
   variant = 'danger',
   onConfirm,
   onCancel,
-}: ConfirmModalProps) => (
-  <ModalOverlay>
-    <ModalCard style={{ maxWidth: '24rem', textAlign: 'center' }}>
-      <IconCircle $variant={variant}>
-        <FaExclamationTriangle />
-      </IconCircle>
-      <Title>{title}</Title>
-      <Message>{message}</Message>
-      <ButtonRow>
-        <Button type="button" $variant="neutral" onClick={onCancel}>
-          {cancelLabel}
-        </Button>
-        <Button type="button" $variant={variant === 'danger' ? 'danger' : 'warning'} onClick={onConfirm}>
-          {confirmLabel}
-        </Button>
-      </ButtonRow>
-    </ModalCard>
-  </ModalOverlay>
-);
+}: ConfirmModalProps) => {
+  const [isConfirming, setIsConfirming] = useState(false);
+
+  const handleConfirm = async () => {
+    setIsConfirming(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
+  return (
+    <ModalOverlay>
+      <ModalCard style={{ maxWidth: '24rem', textAlign: 'center' }}>
+        <IconCircle $variant={variant}>
+          <FaExclamationTriangle />
+        </IconCircle>
+        <Title>{title}</Title>
+        <Message>{message}</Message>
+        <ButtonRow>
+          <Button type="button" $variant="neutral" onClick={onCancel} disabled={isConfirming}>
+            {cancelLabel}
+          </Button>
+          <Button
+            type="button"
+            $variant={variant === 'danger' ? 'danger' : 'warning'}
+            onClick={handleConfirm}
+            disabled={isConfirming}
+          >
+            {isConfirming ? '처리 중...' : confirmLabel}
+          </Button>
+        </ButtonRow>
+      </ModalCard>
+    </ModalOverlay>
+  );
+};

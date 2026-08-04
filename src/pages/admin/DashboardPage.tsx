@@ -183,7 +183,7 @@ const ActionsCell = styled(Td)`
 `;
 
 export const DashboardPage = () => {
-  const { requests, completeRequestById, markUnrecognized, deleteRequestById } = useParkingData();
+  const { requests, completeRequestById, markUnrecognized, deleteRequestById, pendingActionIds } = useParkingData();
   const [pendingUnrecognized, setPendingUnrecognized] = useState<ParkingRequest | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
@@ -291,10 +291,20 @@ export const DashboardPage = () => {
                     <ActionsCell>
                       {req.status === '대기중' && (
                         <>
-                          <Button type="button" $variant="primary" onClick={() => completeRequestById(req.id)}>
+                          <Button
+                            type="button"
+                            $variant="primary"
+                            disabled={pendingActionIds.has(req.id)}
+                            onClick={() => completeRequestById(req.id)}
+                          >
                             등록완료
                           </Button>
-                          <Button type="button" $variant="warning" onClick={() => setPendingUnrecognized(req)}>
+                          <Button
+                            type="button"
+                            $variant="warning"
+                            disabled={pendingActionIds.has(req.id)}
+                            onClick={() => setPendingUnrecognized(req)}
+                          >
                             인식불가
                           </Button>
                         </>
