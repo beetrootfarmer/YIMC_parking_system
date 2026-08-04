@@ -48,7 +48,7 @@ const HomeButton = styled.button`
 
 export const TabletPage = () => {
   const navigate = useNavigate();
-  const { requests, settings, isSubmitting, submitRequest, updateRequestById, deleteRequestById } = useParkingData();
+  const { requests, settings, isSubmitting, submitRequest, updateRequestById, cancelRequestById } = useParkingData();
   const [toast, setToast] = useState<ToastState | null>(null);
   const [editingReq, setEditingReq] = useState<ParkingRequest | null>(null);
   const [cancelingReq, setCancelingReq] = useState<ParkingRequest | null>(null);
@@ -95,7 +95,7 @@ export const TabletPage = () => {
           cancelLabel="닫기"
           variant="danger"
           onConfirm={async () => {
-            const success = await deleteRequestById([cancelingReq.id]);
+            const success = await cancelRequestById([cancelingReq.id]);
             setCancelingReq(null);
             setToast(
               success

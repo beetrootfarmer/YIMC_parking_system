@@ -45,5 +45,7 @@ export const markUnrecognizedRequest = (id: string) => sendAction({ action: 'unr
 
 export const deleteRequest = (ids: string[] | 'all') => sendAction({ action: 'delete', ids });
 
+export const cancelRequest = (ids: string[] | 'all') => sendAction({ action: 'cancel', ids });
+
 export const saveSettings = (courses: string[], tabletPassword: string, adminPassword: string) =>
   sendAction({ action: 'saveSettings', courses, tabletPassword, adminPassword });

@@ -43,35 +43,18 @@ function doPost(e) {
 
     if (data.action === 'delete') {
       const backupSheet = ss.getSheetByName('backup');
-      const rows = reqSheet.getDataRange().getValues();
-      const deleteAll = data.ids === 'all';
-      const targetIds = deleteAll ? null : new Set((data.ids || []).map(String));
-
-      const rowsToBackup = [];
-      const rowNumsToDelete = [];
-      for (let i = 1; i < rows.length; i++) {
-        if (!rows[i][0]) continue;
-        if (deleteAll || targetIds.has(String(rows[i][0]))) {
-          rowsToBackup.push(rows[i]);
-          rowNumsToDelete.push(i + 1);
-        }
-      }
-
-      if (rowsToBackup.length > 0) {
-        if (backupSheet) {
-          backupSheet
-            .getRange(backupSheet.getLastRow() + 1, 1, rowsToBackup.length, rowsToBackup[0].length)
-            .setValues(rowsToBackup);
-        }
-        rowNumsToDelete
-          .sort((a, b) => b - a)
-          .forEach((rowNum) => reqSheet.deleteRow(rowNum));
-      }
-
+      const deletedCount = archiveRequestRows(reqSheet, backupSheet, data.ids, null);
       // ids를 지정했는데 매칭된 행이 하나도 없으면(예: 이전 버전 프런트가 보낸 옛 payload 형식,
       // 이미 삭제된 id 등) 조용히 성공 처리하지 않고 실패로 응답해 프런트가 오류를 인지하게 한다.
-      const success = deleteAll || rowsToBackup.length > 0;
-      return sendResponse({ success, deletedCount: rowsToBackup.length });
+      const success = data.ids === 'all' || deletedCount > 0;
+      return sendResponse({ success, deletedCount });
+    }
+
+    if (data.action === 'cancel') {
+      const backupSheet = ss.getSheetByName('backup');
+      const deletedCount = archiveRequestRows(reqSheet, backupSheet, data.ids, '취소됨');
+      const success = data.ids === 'all' || deletedCount > 0;
+      return sendResponse({ success, deletedCount });
     }
 
     if (data.action === 'update') {
@@ -134,6 +117,37 @@ function getData() {
     requests,
     settings: { courses, tabletPassword, adminPassword }
   };
+}
+
+// requests 시트에서 ids(배열 또는 'all')에 매칭되는 행을 backup으로 옮기고 requests에서 삭제한다.
+// statusOverride가 주어지면 backup에 저장되는 status 컬럼 값을 그 값으로 바꿔서 기록한다(예: '취소됨').
+function archiveRequestRows(reqSheet, backupSheet, ids, statusOverride) {
+  const rows = reqSheet.getDataRange().getValues();
+  const archiveAll = ids === 'all';
+  const targetIds = archiveAll ? null : new Set((ids || []).map(String));
+
+  const rowsToBackup = [];
+  const rowNumsToDelete = [];
+  for (let i = 1; i < rows.length; i++) {
+    if (!rows[i][0]) continue;
+    if (archiveAll || targetIds.has(String(rows[i][0]))) {
+      const row = rows[i].slice();
+      if (statusOverride) row[6] = statusOverride;
+      rowsToBackup.push(row);
+      rowNumsToDelete.push(i + 1);
+    }
+  }
+
+  if (rowsToBackup.length > 0) {
+    if (backupSheet) {
+      backupSheet
+        .getRange(backupSheet.getLastRow() + 1, 1, rowsToBackup.length, rowsToBackup[0].length)
+        .setValues(rowsToBackup);
+    }
+    rowNumsToDelete.sort((a, b) => b - a).forEach((rowNum) => reqSheet.deleteRow(rowNum));
+  }
+
+  return rowsToBackup.length;
 }
 
 function sendResponse(data) {

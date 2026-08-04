@@ -31,6 +31,7 @@ export const useParkingData = ({ polling = true }: UseParkingDataOptions = {}) =
   const completeMutation = useMutation({ mutationFn: (id: string) => api.completeRequest(id) });
   const unrecognizedMutation = useMutation({ mutationFn: (id: string) => api.markUnrecognizedRequest(id) });
   const deleteMutation = useMutation({ mutationFn: (ids: string[] | 'all') => api.deleteRequest(ids) });
+  const cancelMutation = useMutation({ mutationFn: (ids: string[] | 'all') => api.cancelRequest(ids) });
   const saveSettingsMutation = useMutation({
     mutationFn: (input: { courses: string[]; tabletPassword: string; adminPassword: string }) =>
       api.saveSettings(input.courses, input.tabletPassword, input.adminPassword),
@@ -58,6 +59,7 @@ export const useParkingData = ({ polling = true }: UseParkingDataOptions = {}) =
     completeRequestById: (id: string) => runAction(completeMutation.mutateAsync, id),
     markUnrecognized: (id: string) => runAction(unrecognizedMutation.mutateAsync, id),
     deleteRequestById: (ids: string[] | 'all') => runAction(deleteMutation.mutateAsync, ids),
+    cancelRequestById: (ids: string[] | 'all') => runAction(cancelMutation.mutateAsync, ids),
     saveSettings: (courses: string[], tabletPassword: string, adminPassword: string) =>
       runAction(saveSettingsMutation.mutateAsync, { courses, tabletPassword, adminPassword }),
   };
