@@ -174,7 +174,14 @@ export const RegistrationPanel = ({ coursesList, isSubmitting, onSubmit, onToast
           )}
         </FormField>
 
-        <FormField label="이용 시간" size="lg">
+        <FormField
+          label={
+            <>
+              이용 시간<span style={{ color: 'red' }}> (대관 및 교육 시간을 입력해주세요)</span>
+            </>
+          }
+          size="lg"
+        >
           <Select $size="lg" value={usageTime} onChange={(e) => setUsageTime(e.target.value)}>
             {USAGE_TIMES.map((t) => (
               <option key={t} value={t}>

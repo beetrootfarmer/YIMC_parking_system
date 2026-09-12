@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { FieldLabel } from '../styles/shared';
 
 interface FormFieldProps {
-  label: string;
+  label: ReactNode;
   size?: 'lg' | 'md';
   children: ReactNode;
 }
