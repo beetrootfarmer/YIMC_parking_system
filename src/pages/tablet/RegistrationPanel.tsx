@@ -69,7 +69,7 @@ const DailyNotice = styled.p`
 `;
 
 // 특정 날짜에만 표시되는 공지 (month는 1~12)
-const DAILY_NOTICE = { year: 2026, month: 11, day: 14, text: '포럼 및 수업 수강생은 서명부에 기재부탁드립니다.' };
+const DAILY_NOTICE = { year: 2026, month: 11, day: 14, text: '포럼 및 수업 수강생은 서명부에 기재 부탁드립니다.' };
 
 const isNoticeDay = () => {
   const now = new Date();
