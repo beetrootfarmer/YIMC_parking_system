@@ -58,6 +58,28 @@ const Form = styled.form`
   flex: 1;
 `;
 
+const DailyNotice = styled.p`
+  color: #dc2626;
+  font-size: 1.75rem;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.4;
+  margin: 0 0 1.5rem;
+  word-break: keep-all;
+`;
+
+// 특정 날짜에만 표시되는 공지 (month는 1~12)
+const DAILY_NOTICE = { year: 2026, month: 11, day: 14, text: '11월 14일 대학원 및 포럼 수업 수강생은 서명부에 기재부탁드립니다.' };
+
+const isNoticeDay = () => {
+  const now = new Date();
+  return (
+    now.getFullYear() === DAILY_NOTICE.year &&
+    now.getMonth() + 1 === DAILY_NOTICE.month &&
+    now.getDate() === DAILY_NOTICE.day
+  );
+};
+
 const SpinningIcon = styled(FaSpinner)`
   animation: ${spin} 1s linear infinite;
 `;
@@ -132,6 +154,8 @@ export const RegistrationPanel = ({ coursesList, isSubmitting, onSubmit, onToast
         </IconButton>
         <Logo src="https://yimc.or.kr/theme/iwootec/img/logo2.png" alt="용인미디어센터 로고" />
       </Header>
+
+      {isNoticeDay() && <DailyNotice>{DAILY_NOTICE.text}</DailyNotice>}
 
       <TitleBlock>
         <Heading>용인미디어센터</Heading>
